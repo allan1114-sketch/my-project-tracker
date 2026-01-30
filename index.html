@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Project Master v14 (Stable)</title>
+    <title>Project Master (Pro)</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -39,6 +39,7 @@
         .nav-btn { background: transparent; border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; color: var(--text-main); font-size: 13px; display: flex; align-items: center; gap: 5px; }
         .nav-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .nav-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(79, 70, 229, 0.05); }
+        .nav-btn.active:hover { color: white; background: var(--primary-hover); }
 
         .container { max-width: 1600px; margin: 20px auto; padding: 0 20px; }
 
@@ -70,7 +71,10 @@
         .column { flex: 1; min-width: 280px; max-width: 350px; background: var(--bg-column); border-radius: 12px; padding: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; max-height: 80vh; transition: 0.3s; }
         .column-header { display: flex; justify-content: space-between; margin-bottom: 12px; font-weight: 700; color: var(--text-sub); font-size: 14px; padding: 0 5px; }
         .task-list { overflow-y: auto; flex: 1; padding: 2px; min-height: 100px; }
-        .kanban-board.focus-mode #col-blocked, .kanban-board.focus-mode #col-done { display: none; }
+
+        /* Focus Mode: Hide Done and Blocked */
+        .kanban-board.focus-mode #col-blocked, 
+        .kanban-board.focus-mode #col-done { display: none; }
 
         /* --- 日曆 (Calendar) --- */
         #calendar-view { display: none; background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); }
@@ -106,10 +110,12 @@
         .checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
         .checklist-item.done span { text-decoration: line-through; color: var(--text-sub); opacity: 0.6; }
 
+        /* Attachments */
         .attachment-list { list-style: none; padding: 0; margin-top: 5px; }
         .attachment-item { display: flex; align-items: center; gap: 10px; padding: 6px; background: var(--bg-column); border-radius: 6px; font-size: 13px; margin-bottom: 5px; border: 1px solid var(--border); }
         .attachment-item a { flex: 1; text-decoration: none; color: var(--primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+        /* Comments */
         .comments-section { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 15px; }
         .comment-list { list-style: none; padding: 0; max-height: 150px; overflow-y: auto; margin-bottom: 10px; }
         .comment-item { background: var(--bg-column); padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
@@ -126,7 +132,7 @@
 <body>
 
 <nav class="navbar">
-    <div class="brand">⚡ Project Master v14</div>
+    <div class="brand">⚡ Project Master</div>
     <div class="nav-actions">
         <button class="nav-btn active" id="btn-view-kanban" onclick="switchView('kanban')"><span data-i18n="view_kanban">📋 看板</span></button>
         <button class="nav-btn" id="btn-view-calendar" onclick="switchView('calendar')"><span data-i18n="view_cal">📅 日曆</span></button>
@@ -139,11 +145,9 @@
         <div style="width: 1px; height: 20px; background: var(--border); margin: 0 5px;"></div>
 
         <button class="nav-btn" onclick="toggleLanguage()">🌐 <span id="lang-btn-text">中/EN</span></button>
-        
-        <button class="nav-btn" onclick="openDashboardSafe()">📊 <span data-i18n="nav_dash">儀表板</span></button>
-        <button class="nav-btn" onclick="openLogModal()">📜 <span data-i18n="nav_log">日誌</span></button>
-        <button class="nav-btn" onclick="openTeamModal()">👥 <span data-i18n="nav_team">隊員</span></button>
-        
+        <button class="nav-btn" onclick="openDashboard()"><span data-i18n="nav_dash">📊</span></button>
+        <button class="nav-btn" onclick="openLogModal()"><span data-i18n="nav_log">📜</span></button>
+        <button class="nav-btn" onclick="openTeamModal()"><span data-i18n="nav_team">👥</span></button>
         <button class="nav-btn" onclick="toggleTheme()">🌙</button>
         <button class="nav-btn" onclick="exportData()">⬇️</button>
         <button class="nav-btn" onclick="document.getElementById('fileInput').click()">⬆️</button>
@@ -205,7 +209,7 @@
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="input-group"><select id="t-assignee"></select></div>
+                    <div class="input-group"><select id="t-assignee"><option value="" data-i18n="unassigned">(未指派)</option></select></div>
                     <div class="input-group"><input type="date" id="t-end"></div>
                 </div>
                 <button class="btn-primary" onclick="addTask()" data-i18n="btn_add">新增任務</button>
@@ -316,19 +320,19 @@
 
 <script>
     const i18n = {
-        zh: { nav_dash:"儀表板",nav_log:"日誌",nav_team:"隊員",nav_backup:"⬇️ 備份",nav_restore:"⬆️ 還原",search_title:"🔍 搜尋與篩選",ph_keyword:"輸入關鍵字...",all_members:"所有成員",ph_filter_tag:"過濾標籤...",add_title:"➕ 快速新增",ph_task_name:"任務名稱...",ph_tags:"標籤...",ph_img_url:"圖片 URL...",unassigned:"(未指派)",btn_add:"新增任務",col_todo:"📋 待辦",col_inprogress:"⚡ 進行中",col_onhold:"⏸️ 暫停",col_blocked:"⛔ 卡關",col_done:"✅ 完成",btn_clone:"©️ 複製",lbl_status:"狀態",lbl_assignee:"負責人",lbl_priority:"優先級",lbl_tags:"標籤",lbl_img:"圖片",ph_subtask:"新增細項...",btn_delete:"刪除任務",chart_status:"任務狀態分佈",chart_workload:"負責人工作量",log_title:"📜 活動日誌",btn_clear_log:"清空",team_title:"👥 設定隊員",ph_name:"輸入名字...",btn_join:"加入", lbl_desc:"📝 詳細描述", lbl_comments:"💬 留言", view_kanban:"📋 看板", view_cal:"📅 日曆", btn_sort:"🚨 排序", btn_focus:"👀 專注", lbl_attach:"📎 附件" },
-        en: { nav_dash:"Dashboard",nav_log:"Logs",nav_team:"Team",nav_backup:"⬇️ Backup",nav_restore:"⬆️ Restore",search_title:"🔍 Search & Filter",ph_keyword:"Keyword...",all_members:"All Members",ph_filter_tag:"Filter tag...",add_title:"➕ Quick Add",ph_task_name:"Task Name...",ph_tags:"Tags...",ph_img_url:"Image URL...",unassigned:"(Unassigned)",btn_add:"Add Task",col_todo:"📋 To Do",col_inprogress:"⚡ In Progress",col_onhold:"⏸️ On Hold",col_blocked:"⛔ Blocked",col_done:"✅ Done",btn_clone:"©️ Clone",lbl_status:"Status",lbl_assignee:"Assignee",lbl_priority:"Priority",lbl_tags:"Tags",lbl_img:"Image",ph_subtask:"Add subtask...",btn_delete:"Delete Task",chart_status:"Status Distribution",chart_workload:"Member Workload",log_title:"📜 Activity Log",btn_clear_log:"Clear",team_title:"👥 Team Settings",ph_name:"Enter name...",btn_join:"Add", lbl_desc:"📝 Description", lbl_comments:"💬 Comments", view_kanban:"📋 Kanban", view_cal:"📅 Calendar", btn_sort:"🚨 Sort", btn_focus:"👀 Focus", lbl_attach:"📎 Attachments" }
+        zh: { nav_dash:"📈 儀表板",nav_log:"📜 日誌",nav_team:"👥 隊員",nav_backup:"⬇️ 備份",nav_restore:"⬆️ 還原",search_title:"🔍 搜尋與篩選",ph_keyword:"輸入關鍵字...",all_members:"所有成員",ph_filter_tag:"過濾標籤...",add_title:"➕ 快速新增",ph_task_name:"任務名稱...",ph_tags:"標籤...",ph_img_url:"圖片 URL...",unassigned:"(未指派)",btn_add:"新增任務",col_todo:"📋 待辦",col_inprogress:"⚡ 進行中",col_onhold:"⏸️ 暫停",col_blocked:"⛔ 卡關",col_done:"✅ 完成",btn_clone:"©️ 複製",lbl_status:"狀態",lbl_assignee:"負責人",lbl_priority:"優先級",lbl_tags:"標籤",lbl_img:"圖片",ph_subtask:"新增細項...",btn_delete:"刪除任務",chart_status:"任務狀態分佈",chart_workload:"負責人工作量",log_title:"📜 活動日誌",btn_clear_log:"清空",team_title:"👥 設定隊員",ph_name:"輸入名字...",btn_join:"加入", lbl_desc:"📝 詳細描述", lbl_comments:"💬 留言", view_kanban:"📋 看板", view_cal:"📅 日曆", btn_sort:"🚨 排序", btn_focus:"👀 專注", lbl_attach:"📎 附件" },
+        en: { nav_dash:"📈 Dashboard",nav_log:"📜 Logs",nav_team:"👥 Team",nav_backup:"⬇️ Backup",nav_restore:"⬆️ Restore",search_title:"🔍 Search & Filter",ph_keyword:"Keyword...",all_members:"All Members",ph_filter_tag:"Filter tag...",add_title:"➕ Quick Add",ph_task_name:"Task Name...",ph_tags:"Tags...",ph_img_url:"Image URL...",unassigned:"(Unassigned)",btn_add:"Add Task",col_todo:"📋 To Do",col_inprogress:"⚡ In Progress",col_onhold:"⏸️ On Hold",col_blocked:"⛔ Blocked",col_done:"✅ Done",btn_clone:"©️ Clone",lbl_status:"Status",lbl_assignee:"Assignee",lbl_priority:"Priority",lbl_tags:"Tags",lbl_img:"Image",ph_subtask:"Add subtask...",btn_delete:"Delete Task",chart_status:"Status Distribution",chart_workload:"Member Workload",log_title:"📜 Activity Log",btn_clear_log:"Clear",team_title:"👥 Team Settings",ph_name:"Enter name...",btn_join:"Add", lbl_desc:"📝 Description", lbl_comments:"💬 Comments", view_kanban:"📋 Kanban", view_cal:"📅 Calendar", btn_sort:"🚨 Sort", btn_focus:"👀 Focus", lbl_attach:"📎 Attachments" }
     };
     let currentLang = localStorage.getItem('lang') || 'zh';
 
-    let tasks = JSON.parse(localStorage.getItem('v14_tasks')) || [];
-    let members = JSON.parse(localStorage.getItem('v14_members')) || ['自己']; // Default Self
-    let activities = JSON.parse(localStorage.getItem('v14_activities')) || [];
+    let tasks = JSON.parse(localStorage.getItem('v13_tasks')) || [];
+    let members = JSON.parse(localStorage.getItem('v13_members')) || ['Me'];
+    let activities = JSON.parse(localStorage.getItem('v13_activities')) || [];
 
-    // Migration
-    if (tasks.length === 0 && localStorage.getItem('v13_tasks')) {
-        tasks = JSON.parse(localStorage.getItem('v13_tasks'));
-        members = JSON.parse(localStorage.getItem('v13_members'));
+    // Migration v12
+    if (tasks.length === 0 && localStorage.getItem('v12_tasks')) {
+        tasks = JSON.parse(localStorage.getItem('v12_tasks'));
+        members = JSON.parse(localStorage.getItem('v12_members'));
     }
     if (localStorage.getItem('theme') === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
     document.getElementById('t-end').valueAsDate = new Date();
@@ -337,11 +341,7 @@
     let isSorted = false;
     let isFocus = false;
 
-    // FIX: Render members immediately to populate default assignee
-    applyLanguage(); 
-    renderMembers(); 
-    renderKanban(); 
-    setInterval(updateTimerDisplay, 1000);
+    applyLanguage(); renderMembers(); renderKanban(); setInterval(updateTimerDisplay, 1000);
 
     // Shortcuts
     document.addEventListener('keydown', (e) => {
@@ -349,6 +349,7 @@
         if (e.key.toLowerCase() === 'n' && !e.target.matches('input,textarea')) document.getElementById('t-name').focus();
     });
 
+    // View Switcher
     function switchView(view) {
         document.getElementById('kanban-wrapper').style.display = view==='kanban' ? 'block' : 'none';
         document.getElementById('calendar-view').style.display = view==='calendar' ? 'block' : 'none';
@@ -357,6 +358,7 @@
         if(view==='calendar') renderCalendar();
     }
 
+    // Auto Sort (Priority)
     function sortTasks() {
         isSorted = !isSorted;
         const btn = document.querySelector('button[onclick="sortTasks()"]');
@@ -365,28 +367,43 @@
         renderKanban();
     }
 
+    // Focus Mode
     function toggleFocusMode() {
         isFocus = !isFocus;
         const board = document.getElementById('main-board');
         const btn = document.getElementById('btn-focus');
-        if(isFocus) { board.classList.add('focus-mode'); btn.style.background = 'var(--primary)'; btn.style.color = 'white'; } 
-        else { board.classList.remove('focus-mode'); btn.style.background = 'transparent'; btn.style.color = 'var(--text-main)'; }
+        if(isFocus) {
+            board.classList.add('focus-mode');
+            btn.style.background = 'var(--primary)'; btn.style.color = 'white';
+        } else {
+            board.classList.remove('focus-mode');
+            btn.style.background = 'transparent'; btn.style.color = 'var(--text-main)';
+        }
     }
 
+    // Calendar Logic
     function renderCalendar() {
         const body = document.getElementById('calendar-body');
         body.innerHTML = '';
         const year = calDate.getFullYear();
         const month = calDate.getMonth();
         document.getElementById('cal-title').innerText = new Date(year, month).toLocaleString(currentLang, { month:'long', year:'numeric' });
+
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const todayStr = new Date().toISOString().split('T')[0];
+
+        // Empty cells
         for(let i=0; i<firstDay; i++) body.innerHTML += `<div class="calendar-day" style="background:transparent;border:none;"></div>`;
+
+        // Days
         for(let d=1; d<=daysInMonth; d++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             const isToday = dateStr === todayStr;
-            let html = `<div class="calendar-day ${isToday?'today':''}"><span class="day-num">${d}</span>`;
+            let html = `<div class="calendar-day ${isToday?'today':''}">
+                <span class="day-num">${d}</span>`;
+            
+            // Find tasks for this day
             tasks.filter(t => t.end === dateStr).forEach(t => {
                 html += `<div class="cal-task ${t.status==='done'?'done':''}" onclick="openTaskModal('${t.id}')">${t.name}</div>`;
             });
@@ -394,8 +411,12 @@
             body.innerHTML += html;
         }
     }
-    function changeMonth(delta) { calDate.setMonth(calDate.getMonth() + delta); renderCalendar(); }
+    function changeMonth(delta) {
+        calDate.setMonth(calDate.getMonth() + delta);
+        renderCalendar();
+    }
 
+    // Tag Menu
     function toggleTagMenu(id) {
         const menu = document.getElementById(id);
         const isVisible = menu.style.display === 'block';
@@ -416,14 +437,13 @@
         document.querySelectorAll('[data-i18n]').forEach(el => { const k=el.getAttribute('data-i18n'); if(i18n[currentLang][k]) el.innerText=i18n[currentLang][k]; });
         document.querySelectorAll('[data-ph]').forEach(el => { const k=el.getAttribute('data-ph'); if(i18n[currentLang][k]) el.placeholder=i18n[currentLang][k]; });
         if(document.getElementById('calendar-view').style.display === 'block') renderCalendar();
-        renderMembers(); // Re-render dropdowns to update text
     }
 
     function addTask() {
         const name = document.getElementById('t-name').value;
         if (!name) return alert(currentLang==='zh'?"請輸入名稱":"Name required");
         const tags = document.getElementById('t-tags').value.split(',').map(t=>t.trim()).filter(t=>t);
-        tasks.push({ id:'t'+Date.now(), name, priority:document.getElementById('t-priority').value, assignee:document.getElementById('t-assignee').value||members[0]||'', end:document.getElementById('t-end').value, tags, img:document.getElementById('t-img').value, status:'todo', checklist:[], timer:{totalSeconds:0,isRunning:false}, desc:'', comments:[], attachments:[] });
+        tasks.push({ id:'t'+Date.now(), name, priority:document.getElementById('t-priority').value, assignee:document.getElementById('t-assignee').value||'', end:document.getElementById('t-end').value, tags, img:document.getElementById('t-img').value, status:'todo', checklist:[], timer:{totalSeconds:0,isRunning:false}, desc:'', comments:[], attachments:[] });
         logActivity(`New Task: "${name}"`); saveAndRender();
         document.getElementById('t-name').value = ''; document.getElementById('t-tags').value = '';
     }
@@ -432,13 +452,20 @@
         const sT=document.getElementById('s-text').value.toLowerCase(), sM=document.getElementById('s-member').value, sTg=document.getElementById('s-tag').value.toLowerCase();
         ['todo','inprogress','onhold','blocked','done'].forEach(id => document.getElementById(id).innerHTML = '');
         let c={todo:0,inprogress:0,onhold:0,blocked:0,done:0};
+
+        // Filter
         let filteredTasks = tasks.filter(t => {
             if(sT && !t.name.toLowerCase().includes(sT)) return false;
             if(sM && t.assignee !== sM) return false;
             if(sTg && (!t.tags || !t.tags.some(Tag=>Tag.toLowerCase().includes(sTg)))) return false;
             return true;
         });
-        if (isSorted) { const pMap = { 'High':3, 'Medium':2, 'Low':1 }; filteredTasks.sort((a,b) => pMap[b.priority] - pMap[a.priority]); }
+
+        // Sort Logic (High->Medium->Low)
+        if (isSorted) {
+            const pMap = { 'High':3, 'Medium':2, 'Low':1 };
+            filteredTasks.sort((a,b) => pMap[b.priority] - pMap[a.priority]);
+        }
 
         filteredTasks.forEach(t => {
             c[t.status]++;
@@ -465,15 +492,47 @@
         renderChecklist(t); renderComments(t); renderAttachments(t); updateTimerUI(t); document.getElementById('taskModal').classList.add('active'); 
     }
 
+    // Attachments Logic (Simulated)
     function renderAttachments(t) {
         if(!t.attachments) t.attachments = [];
         const ul = document.getElementById('attachment-list');
-        ul.innerHTML = t.attachments.map((a, idx) => `<li class="attachment-item"><span style="font-size:16px;">${a.type==='file'?'📄':'🔗'}</span><a href="${a.url}" target="_blank">${a.name}</a><button onclick="removeAttachment(${idx})" style="color:red; border:none; background:none;">×</button></li>`).join('');
+        ul.innerHTML = t.attachments.map((a, idx) => `
+            <li class="attachment-item">
+                <span style="font-size:16px;">${a.type==='file'?'📄':'🔗'}</span>
+                <a href="${a.url}" target="_blank">${a.name}</a>
+                <button onclick="removeAttachment(${idx})" style="color:red; border:none; background:none;">×</button>
+            </li>
+        `).join('');
     }
-    function fakeUploadFile(input) { if(input.files && input.files[0]) { const t = tasks.find(k => k.id === currentTaskId); if(!t.attachments) t.attachments = []; t.attachments.push({ name: input.files[0].name, url: '#', type: 'file' }); saveAndRender(); renderAttachments(t); input.value = ''; } }
-    function addAttachmentLink() { const input = document.getElementById('attach-link'); const url = input.value.trim(); if(url) { const t = tasks.find(k => k.id === currentTaskId); if(!t.attachments) t.attachments = []; t.attachments.push({ name: url, url: url, type: 'link' }); input.value = ''; saveAndRender(); renderAttachments(t); } }
-    function removeAttachment(idx) { const t = tasks.find(k => k.id === currentTaskId); t.attachments.splice(idx, 1); saveAndRender(); renderAttachments(t); }
+    function fakeUploadFile(input) {
+        if(input.files && input.files[0]) {
+            const file = input.files[0];
+            const t = tasks.find(k => k.id === currentTaskId);
+            if(!t.attachments) t.attachments = [];
+            // Simulate upload by storing name and a fake local URL
+            t.attachments.push({ name: file.name, url: '#', type: 'file' });
+            saveAndRender(); renderAttachments(t);
+            input.value = ''; // clear
+        }
+    }
+    function addAttachmentLink() {
+        const input = document.getElementById('attach-link');
+        const url = input.value.trim();
+        if(url) {
+            const t = tasks.find(k => k.id === currentTaskId);
+            if(!t.attachments) t.attachments = [];
+            t.attachments.push({ name: url, url: url, type: 'link' });
+            input.value = '';
+            saveAndRender(); renderAttachments(t);
+        }
+    }
+    function removeAttachment(idx) {
+        const t = tasks.find(k => k.id === currentTaskId);
+        t.attachments.splice(idx, 1);
+        saveAndRender(); renderAttachments(t);
+    }
 
+    // Timer, Comments, Checklist, etc (Same as v12)
     function toggleTimer(){ const t=tasks.find(k=>k.id===currentTaskId); if(!t.timer)t.timer={totalSeconds:0,isRunning:false}; if(t.timer.isRunning){ t.timer.totalSeconds+=Math.floor((Date.now()-t.timer.lastStartTime)/1000); t.timer.isRunning=false; }else{ t.timer.isRunning=true; t.timer.lastStartTime=Date.now(); } saveAndRender(); updateTimerUI(t); }
     function updateTimerUI(t){ if(!t.timer)t.timer={totalSeconds:0,isRunning:false}; const btn=document.getElementById('m-timer-btn'); btn.innerText=t.timer.isRunning?"⏸ Pause":"▶ Start"; btn.style.background=t.timer.isRunning?"#ef4444":"var(--primary)"; updateTimerDisplay(); }
     function updateTimerDisplay(){ if(!currentTaskId||!document.getElementById('taskModal').classList.contains('active'))return; const t=tasks.find(k=>k.id===currentTaskId); if(!t||!t.timer)return; let total=t.timer.totalSeconds; if(t.timer.isRunning)total+=Math.floor((Date.now()-t.timer.lastStartTime)/1000); const h=Math.floor(total/3600), m=Math.floor((total%3600)/60), s=total%60; document.getElementById('m-time-display').innerText=`${h}h ${m}m ${s}s`; }
@@ -487,47 +546,23 @@
     function updateTaskStatus(){ const t=tasks.find(k=>k.id===currentTaskId); t.status=document.getElementById('m-status').value; if(t.status==='done') confetti({particleCount:100,spread:70,origin:{y:0.6}}); saveAndRender(); }
     function updateTaskMeta(){ const t=tasks.find(k=>k.id===currentTaskId); t.assignee=document.getElementById('m-assignee').value; t.priority=document.getElementById('m-priority').value; t.img=document.getElementById('m-img').value; t.desc=document.getElementById('m-desc').value; t.tags=document.getElementById('m-tags').value.split(',').filter(x=>x); saveAndRender(); }
     function deleteCurrentTask(){ if(confirm('Delete?')){ tasks=tasks.filter(k=>k.id!==currentTaskId); saveAndRender(); closeModal('taskModal'); } }
-    
     function openTeamModal(){ renderTeamList(); document.getElementById('teamModal').classList.add('active'); }
     function addMember(){ const v=document.getElementById('new-member-name').value.trim(); if(v&&!members.includes(v)){ members.push(v); saveMembers(); renderTeamList(); renderMembers(); document.getElementById('new-member-name').value=''; } }
     function removeMember(n){ if(confirm('Remove?')){ members=members.filter(m=>m!==n); saveMembers(); renderTeamList(); renderMembers(); } }
     function renderTeamList(){ document.getElementById('team-list-display').innerHTML=members.map(m=>`<button style="padding:5px 10px;border:1px solid #ddd;border-radius:15px;background:#fff" onclick="removeMember('${m}')">${m} ×</button>`).join(''); }
-    
-    // FIX: Render members with default first option selected
-    function renderMembers(){ 
-        const all=currentLang==='zh'?'所有成員':'All Members'; 
-        const opts=members.map(m=>`<option value="${m}">${m}</option>`).join(''); 
-        document.getElementById('t-assignee').innerHTML=opts; // Quick Add defaults to first member
-        if(members.length>0) document.getElementById('t-assignee').value = members[0];
-        
-        document.getElementById('m-assignee').innerHTML=opts; 
-        document.getElementById('s-member').innerHTML=`<option value="">${all}</option>`+opts; 
-    }
-    
+    function renderMembers(){ const txt=currentLang==='zh'?'(未指派)':'(Unassigned)'; const all=currentLang==='zh'?'所有成員':'All Members'; const opts=`<option value="">${txt}</option>`+members.map(m=>`<option value="${m}">${m}</option>`).join(''); document.getElementById('t-assignee').innerHTML=opts; document.getElementById('m-assignee').innerHTML=opts; document.getElementById('s-member').innerHTML=`<option value="">${all}</option>`+members.map(m=>`<option value="${m}">${m}</option>`).join(''); }
     function allowDrop(ev){ev.preventDefault();}
     function drop(ev){ ev.preventDefault(); const id=ev.dataTransfer.getData("text"); const t=ev.target.closest('.task-list'); if(t){ const task=tasks.find(k=>k.id===id); if(task.status!==t.id){ task.status=t.id; if(t.id==='done') confetti({particleCount:100,spread:70,origin:{y:0.6}}); saveAndRender(); } } }
-    
-    // FIX: Safer dashboard opening
-    function openDashboardSafe(){ 
-        document.getElementById('dashboardModal').classList.add('active'); 
-        try { renderCharts(); } catch(e) { console.error(e); }
-    }
-    function renderCharts(){ 
-        if(window.C1)window.C1.destroy(); if(window.C2)window.C2.destroy(); 
-        const sData=['todo','inprogress','onhold','blocked','done'].map(s=>tasks.filter(t=>t.status===s).length); 
-        const mCount={}; members.forEach(m=>mCount[m]=0); tasks.forEach(t=>{ if(t.assignee) mCount[t.assignee]++ }); 
-        window.C1=new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:['Todo','In Prog','Hold','Blocked','Done'],datasets:[{data:sData,backgroundColor:['#cbd5e1','#3b82f6','#f59e0b','#ef4444','#10b981']}]}}); 
-        window.C2=new Chart(document.getElementById('memberChart'),{type:'bar',data:{labels:Object.keys(mCount),datasets:[{label:'Tasks',data:Object.values(mCount),backgroundColor:'#4f46e5'}]}}); 
-    }
-    
-    function logActivity(msg){ activities.unshift({msg,time:new Date().toLocaleString()}); if(activities.length>50)activities.pop(); localStorage.setItem('v14_activities',JSON.stringify(activities)); }
+    function openDashboard(){ document.getElementById('dashboardModal').classList.add('active'); renderCharts(); }
+    function renderCharts(){ if(window.C1)window.C1.destroy(); if(window.C2)window.C2.destroy(); const sData=['todo','inprogress','onhold','blocked','done'].map(s=>tasks.filter(t=>t.status===s).length); const mCount={}; members.forEach(m=>mCount[m]=0); mCount['Unassigned']=0; tasks.forEach(t=>{mCount[t.assignee||'Unassigned']++}); window.C1=new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:['Todo','In Prog','Hold','Blocked','Done'],datasets:[{data:sData,backgroundColor:['#cbd5e1','#3b82f6','#f59e0b','#ef4444','#10b981']}]}}); window.C2=new Chart(document.getElementById('memberChart'),{type:'bar',data:{labels:Object.keys(mCount),datasets:[{label:'Tasks',data:Object.values(mCount),backgroundColor:'#4f46e5'}]}}); }
+    function logActivity(msg){ activities.unshift({msg,time:new Date().toLocaleString()}); if(activities.length>50)activities.pop(); localStorage.setItem('v13_activities',JSON.stringify(activities)); }
     function openLogModal(){ document.getElementById('log-list').innerHTML=activities.map(a=>`<li class="log-item"><span>${a.msg}</span> <span style="font-size:10px;color:#999">${a.time}</span></li>`).join(''); document.getElementById('logModal').classList.add('active'); }
-    function clearLog(){ activities=[]; localStorage.setItem('v14_activities','[]'); openLogModal(); }
-    function saveAndRender(){ localStorage.setItem('v14_tasks',JSON.stringify(tasks)); renderKanban(); }
-    function saveMembers(){ localStorage.setItem('v14_members',JSON.stringify(members)); }
+    function clearLog(){ activities=[]; localStorage.setItem('v13_activities','[]'); openLogModal(); }
+    function saveAndRender(){ localStorage.setItem('v13_tasks',JSON.stringify(tasks)); renderKanban(); }
+    function saveMembers(){ localStorage.setItem('v13_members',JSON.stringify(members)); }
     function closeModal(id){ document.getElementById(id).classList.remove('active'); }
     function toggleTheme(){ const d=document.documentElement; const isDark=d.getAttribute('data-theme')==='dark'; d.setAttribute('data-theme',isDark?'light':'dark'); localStorage.setItem('theme',isDark?'light':'dark'); }
-    function exportData(){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({tasks,members,activities})],{type:'application/json'})); a.download='backup_v14.json'; a.click(); }
+    function exportData(){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify({tasks,members,activities})],{type:'application/json'})); a.download='backup_v13.json'; a.click(); }
     function importData(e){ const r=new FileReader(); r.onload=(ev)=>{ const d=JSON.parse(ev.target.result); if(d.tasks)tasks=d.tasks; if(d.members)members=d.members; saveAndRender(); saveMembers(); renderMembers(); alert('Restored!'); }; r.readAsText(e.target.files[0]); }
 </script>
 </body>
