@@ -106,5 +106,5 @@ Since this is a pure Vanilla JS project, no installation is required.
 
 ---
 
-**Built with ❤️ by [Your Name]**
+**Built with ❤️ by Alan **
 *If you find this project useful, give it a ⭐!*
