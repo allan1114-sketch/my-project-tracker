@@ -1,7 +1,3 @@
-This is a professional, high-quality GitHub README template tailored for your **my-project-tracker**. It uses GFM (GitHub Flavored Markdown) features including badges, tables, task lists, and code blocks.
-
----
-
 # # my-project-tracker 📋
 
 [![Language](https://img.shields.io/badge/Language-Vanilla%20JS-yellow.svg)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
